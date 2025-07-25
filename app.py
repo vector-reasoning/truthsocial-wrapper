@@ -1,53 +1,22 @@
-import asyncio
-import json
-from typing import NoReturn
-from truthsocial import Api
+from flask import Flask, jsonify
+from truthbrush import Api
+from datetime import datetime, timezone, timedelta
 
-from datetime import datetime
+app = Flask(__name__)
+api = Api(username="newsalpha", password="98%IQSquad")
 
-TRUTHSOCIAL_USERNAME = "newsalpha"
-TRUTHSOCIAL_PASSWORD = "98%IQSquad"
+@app.route('/trump')
+def get_statuses():
 
-
-async def main() -> NoReturn:
-
-    api = Api(username=TRUTHSOCIAL_USERNAME, password=TRUTHSOCIAL_PASSWORD)
-    already_seen_id_set = set()
-
-    #first run to fill the post set
-    posts = api.pull_statuses("realDonaldTrump")
-    count = 25
+    created_after = datetime.now(timezone.utc) - timedelta(hours=5)
+    posts = api.pull_statuses("realDonaldTrump", created_after=created_after, verbose=True)
+    response_list = []
     for post in posts:
         print(post)
-        post_id = str(post.get('id', ''))
-        already_seen_id_set.add(post_id)
-        count -= 1
-        if count == 0:
-            break
-    await asyncio.sleep(1)
-
-    while True:
-        try:
-            print(f"Fetching new realDonaldTrump posts...")
-            posts = api.pull_statuses("realDonaldTrump")
-            for post in posts:
-                post_id = str(post.get('id'))
-                if not post_id:
-                    print("problem with post_id " + str(post))
-                    continue
-                if post_id in already_seen_id_set:
-                    break
-                already_seen_id_set.add(post_id)
-                post_json = json.dumps(post)
-
-                print(f"Added new post to queue: {post}")
-
-            print("sleeping for " + str(1) + " seconds")
-
-        except Exception as e:
-            print(f"Error processing Truth Social posts: {e}")
-            await asyncio.sleep(60)  # Wait a minute before retrying on error
+        response_list.append(post)
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    return jsonify(response_list)
+
+if __name__ == '__main__':
+    app.run(port=5000)
