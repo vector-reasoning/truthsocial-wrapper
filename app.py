@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
-from truthbrush import Api
 from datetime import datetime, timezone, timedelta
+from truthsocial import Api
 
 app = Flask(__name__)
 api = Api(username="newsalpha", password="98%IQSquad")
